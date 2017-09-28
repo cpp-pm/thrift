@@ -28,13 +28,8 @@ if(WITH_SHARED_LIB)
     set_target_properties(${name} PROPERTIES
         OUTPUT_NAME ${name}
         VERSION ${thrift_VERSION}
-        SOVERSION ${thrift_VERSION} )
-    #set_target_properties(${name} PROPERTIES PUBLIC_HEADER "${thriftcpp_HEADERS}")
-    install(TARGETS ${name}
-        RUNTIME DESTINATION "${BIN_INSTALL_DIR}"
-        LIBRARY DESTINATION "${LIB_INSTALL_DIR}"
-        ARCHIVE DESTINATION "${LIB_INSTALL_DIR}"
-        PUBLIC_HEADER DESTINATION "${INCLUDE_INSTALL_DIR}")
+        SOVERSION ${thrift_VERSION})
+    list(APPEND thrift_lib_targets ${name})
 endif()
 
 if(WITH_STATIC_LIB)
@@ -42,12 +37,8 @@ if(WITH_STATIC_LIB)
     set_target_properties(${name}_static PROPERTIES
         OUTPUT_NAME ${name}${STATIC_POSTFIX}
         VERSION ${thrift_VERSION}
-        SOVERSION ${thrift_VERSION} )
-    install(TARGETS ${name}_static
-        RUNTIME DESTINATION "${BIN_INSTALL_DIR}"
-        LIBRARY DESTINATION "${LIB_INSTALL_DIR}"
-        ARCHIVE DESTINATION "${LIB_INSTALL_DIR}"
-        PUBLIC_HEADER DESTINATION "${INCLUDE_INSTALL_DIR}")
+        SOVERSION ${thrift_VERSION})
+    list(APPEND thrift_lib_targets ${name}_static)
 endif()
 
 endmacro(ADD_LIBRARY_THRIFT)
@@ -56,11 +47,11 @@ endmacro(ADD_LIBRARY_THRIFT)
 macro(TARGET_INCLUDE_DIRECTORIES_THRIFT name)
 
 if(WITH_SHARED_LIB)
-    target_include_directories(${name} ${ARGN})
+    target_include_directories(${name} PUBLIC ${ARGN})
 endif()
 
 if(WITH_STATIC_LIB)
-    target_include_directories(${name}_static ${ARGN})
+    target_include_directories(${name}_static PUBLIC ${ARGN})
 endif()
 
 endmacro(TARGET_INCLUDE_DIRECTORIES_THRIFT)
