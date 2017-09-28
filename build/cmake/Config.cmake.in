@@ -1,8 +1,17 @@
 @PACKAGE_INIT@
 
-include(CMakeFindDependencyMacro)
-find_dependency(ZLIB)
-find_dependency(Libevent)
+set(package_deps @package_deps@)
+foreach(dep IN LISTS package_deps)
+    if(dep STREQUAL "OpenSSL")
+        find_package(OpenSSL REQUIRED)
+    else()
+        find_package(${dep} CONFIG REQUIRED)
+    endif()
+endforeach()
+
+set(boost_components @boost_components@)
+find_package(Boost CONFIG REQUIRED ${boost_components})
+
 check_required_components("@PROJECT_NAME@")
 
 include("${CMAKE_CURRENT_LIST_DIR}/@TARGETS_EXPORT_NAME@.cmake")

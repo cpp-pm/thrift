@@ -21,6 +21,8 @@ include_directories(src)
 
 # SYSLIBS contains libraries that need to be linked to all lib targets
 set(SYSLIBS "")
+set(package_deps Boost)
+set(boost_components)
 
 # Create the thrift C++ library
 set( thriftcpp_SOURCES
@@ -96,8 +98,8 @@ if(WITH_OPENSSL)
        src/thrift/transport/TSSLSocket.cpp
        src/thrift/transport/TSSLServerSocket.cpp
     )
-    include_directories(SYSTEM "${OPENSSL_INCLUDE_DIR}")
-    list(APPEND SYSLIBS "${OPENSSL_LIBRARIES}")
+    list(APPEND SYSLIBS OpenSSL::SSL OpenSSL::Crypto)
+    list(APPEND package_deps OpenSSL)
 endif()
 
 # WITH_*THREADS selects which threading library to use
@@ -108,6 +110,7 @@ if(WITH_BOOSTTHREADS)
         src/thrift/concurrency/BoostMutex.cpp
     )
     list(APPEND SYSLIBS "${Boost_LIBRARIES}")
+    list(APPEND boost_components thread)
 elseif(UNIX AND NOT WITH_STDTHREADS)
     if(ANDROID)
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread")
@@ -175,6 +178,7 @@ if(WITH_LIBEVENT)
     ADD_LIBRARY_THRIFT(thriftnb ${thriftcppnb_SOURCES})
     TARGET_LINK_LIBRARIES_THRIFT(thriftnb ${SYSLIBS} Libevent::event_core Libevent::event_extra)
     TARGET_LINK_LIBRARIES_THRIFT_AGAINST_THRIFT_LIBRARY(thriftnb thrift)
+    list(APPEND package_deps Libevent)
 endif()
 
 if(WITH_ZLIB)
@@ -185,6 +189,7 @@ if(WITH_ZLIB)
     ADD_LIBRARY_THRIFT(thriftz ${thriftcppz_SOURCES})
     TARGET_LINK_LIBRARIES_THRIFT(thriftz ${SYSLIBS} ZLIB::zlib)
     TARGET_LINK_LIBRARIES_THRIFT_AGAINST_THRIFT_LIBRARY(thriftz thrift)
+    list(APPEND package_deps ZLIB)
 endif()
 
 if(WITH_QT4)
