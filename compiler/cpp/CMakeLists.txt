@@ -45,7 +45,9 @@ else()
     configure_file(${CMAKE_CURRENT_SOURCE_DIR}/version.h.in ${CMAKE_CURRENT_BINARY_DIR}/version.h)
 endif()
 
+hunter_add_package(flex)
 find_package(FLEX REQUIRED)
+hunter_add_package(bison)
 find_package(BISON REQUIRED)
 
 # Create flex and bison files and build the lib parse static library
