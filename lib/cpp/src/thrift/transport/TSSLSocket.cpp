@@ -140,13 +140,11 @@ SSLContext::SSLContext(const SSLProtocol& protocol) {
   if(protocol == SSLTLS)
   {
     ctx_ = SSL_CTX_new(SSLv23_method());
-  }
-  else if(protocol == SSLv3)
-  {
+#ifndef OPENSSL_NO_SSL3
+  } else if (protocol == SSLv3) {
     ctx_ = SSL_CTX_new(SSLv3_method());
-  }
-  else if(protocol == TLSv1_0)
-  {
+#endif
+  } else if (protocol == TLSv1_0) {
     ctx_ = SSL_CTX_new(TLSv1_method());
   }
   else if(protocol == TLSv1_1)
