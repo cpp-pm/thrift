@@ -26,36 +26,39 @@ set(boost_components)
 
 # Create the thrift C++ library
 set( thriftcpp_SOURCES
+   src/thrift/Thrift.cpp
    src/thrift/TApplicationException.cpp
-   src/thrift/TOutput.cpp
-   src/thrift/async/TAsyncChannel.cpp
-   src/thrift/async/TConcurrentClientSyncInfo.h
-   src/thrift/async/TConcurrentClientSyncInfo.cpp
+   src/thrift/VirtualProfiling.cpp
    src/thrift/concurrency/ThreadManager.cpp
    src/thrift/concurrency/TimerManager.cpp
    src/thrift/concurrency/Util.cpp
-   src/thrift/processor/PeekProcessor.cpp
-   src/thrift/protocol/TBase64Utils.cpp
    src/thrift/protocol/TDebugProtocol.cpp
+   src/thrift/protocol/TDenseProtocol.cpp
    src/thrift/protocol/TJSONProtocol.cpp
+   src/thrift/protocol/TBase64Utils.cpp
    src/thrift/protocol/TMultiplexedProtocol.cpp
-   src/thrift/protocol/TProtocol.cpp
    src/thrift/transport/TTransportException.cpp
    src/thrift/transport/TFDTransport.cpp
+   src/thrift/transport/TFileTransport.cpp
    src/thrift/transport/TSimpleFileTransport.cpp
    src/thrift/transport/THttpTransport.cpp
    src/thrift/transport/THttpClient.cpp
    src/thrift/transport/THttpServer.cpp
    src/thrift/transport/TSocket.cpp
+   src/thrift/transport/TPipe.cpp
+   src/thrift/transport/TPipeServer.cpp
+   src/thrift/transport/TSSLSocket.cpp
    src/thrift/transport/TSocketPool.cpp
    src/thrift/transport/TServerSocket.cpp
+   src/thrift/transport/TSSLServerSocket.cpp
    src/thrift/transport/TTransportUtils.cpp
    src/thrift/transport/TBufferTransports.cpp
-   src/thrift/server/TConnectedClient.cpp
-   src/thrift/server/TServerFramework.cpp
+   src/thrift/server/TServer.cpp
    src/thrift/server/TSimpleServer.cpp
    src/thrift/server/TThreadPoolServer.cpp
    src/thrift/server/TThreadedServer.cpp
+   src/thrift/async/TAsyncChannel.cpp
+   src/thrift/processor/PeekProcessor.cpp
 )
 
 # This files don't work on Windows CE as there is no pipe support
@@ -148,10 +151,6 @@ set( thriftcppnb_SOURCES
 # Thrift zlib server
 set( thriftcppz_SOURCES
     src/thrift/transport/TZlibTransport.cpp
-    src/thrift/protocol/THeaderProtocol.cpp
-    src/thrift/transport/THeaderTransport.cpp
-    src/thrift/protocol/THeaderProtocol.cpp
-    src/thrift/transport/THeaderTransport.cpp
 )
 
 # Thrift Qt4 server
