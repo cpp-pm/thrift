@@ -2,8 +2,8 @@
 
 set(package_deps @package_deps@)
 foreach(dep IN LISTS package_deps)
-    if(dep STREQUAL "OpenSSL")
-        find_package(OpenSSL REQUIRED)
+    if(dep STREQUAL "OpenSSL" OR dep STREQUAL "Threads")
+        find_package(${dep} REQUIRED)
     else()
         find_package(${dep} CONFIG REQUIRED)
     endif()
