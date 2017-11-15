@@ -24,6 +24,8 @@ set(SYSLIBS "")
 set(package_deps Boost)
 set(boost_components)
 
+list(APPEND SYSLIBS "${Boost_LIBRARIES}")
+
 # Create the thrift C++ library
 set( thriftcpp_SOURCES
    src/thrift/Thrift.cpp
@@ -112,7 +114,6 @@ if(WITH_BOOSTTHREADS)
         src/thrift/concurrency/BoostMonitor.cpp
         src/thrift/concurrency/BoostMutex.cpp
     )
-    list(APPEND SYSLIBS "${Boost_LIBRARIES}")
     list(APPEND boost_components thread)
 elseif(UNIX AND NOT WITH_STDTHREADS)
     if(ANDROID)
