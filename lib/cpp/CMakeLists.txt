@@ -24,6 +24,8 @@ set(SYSLIBS "")
 set(package_deps Boost)
 set(boost_components)
 
+list(APPEND SYSLIBS Boost::boost)
+
 # Create the thrift C++ library
 set( thriftcpp_SOURCES
    src/thrift/Thrift.cpp
@@ -47,10 +49,8 @@ set( thriftcpp_SOURCES
    src/thrift/transport/TSocket.cpp
    src/thrift/transport/TPipe.cpp
    src/thrift/transport/TPipeServer.cpp
-   src/thrift/transport/TSSLSocket.cpp
    src/thrift/transport/TSocketPool.cpp
    src/thrift/transport/TServerSocket.cpp
-   src/thrift/transport/TSSLServerSocket.cpp
    src/thrift/transport/TTransportUtils.cpp
    src/thrift/transport/TBufferTransports.cpp
    src/thrift/server/TServer.cpp
@@ -112,7 +112,6 @@ if(WITH_BOOSTTHREADS)
         src/thrift/concurrency/BoostMonitor.cpp
         src/thrift/concurrency/BoostMutex.cpp
     )
-    list(APPEND SYSLIBS "${Boost_LIBRARIES}")
     list(APPEND boost_components thread)
 elseif(UNIX AND NOT WITH_STDTHREADS)
     if(ANDROID)
@@ -164,9 +163,9 @@ include(ThriftMacros)
 
 ADD_LIBRARY_THRIFT(thrift ${thriftcpp_SOURCES} ${thriftcpp_threads_SOURCES})
 if(WIN32)
-    TARGET_LINK_LIBRARIES_THRIFT(thrift ${SYSLIBS} ws2_32)
+    TARGET_LINK_LIBRARIES_THRIFT(thrift PUBLIC ${SYSLIBS} ws2_32)
 else()
-    TARGET_LINK_LIBRARIES_THRIFT(thrift ${SYSLIBS})
+    TARGET_LINK_LIBRARIES_THRIFT(thrift PUBLIC ${SYSLIBS})
 endif()
 
 if(WITH_LIBEVENT)
