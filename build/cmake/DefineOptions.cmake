@@ -60,7 +60,6 @@ endif()
 # C++
 option(WITH_CPP "Build C++ Thrift library" ON)
 if(WITH_CPP)
-    find_package(Boost 1.53 QUIET)
     # NOTE: Currently the following options are C++ specific,
     # but in future other libraries might reuse them.
     # So they are not dependent on WITH_CPP but setting them without WITH_CPP currently
@@ -69,31 +68,22 @@ if(WITH_CPP)
         # FindZLIB.cmake does not normalize path so we need to do it ourselves.
         file(TO_CMAKE_PATH ${ZLIB_LIBRARY} ZLIB_LIBRARY)
     endif()
-    find_package(ZLIB QUIET)
-    CMAKE_DEPENDENT_OPTION(WITH_ZLIB "Build with ZLIB support" ON
-                           "ZLIB_FOUND" OFF)
-    find_package(Libevent QUIET)
-    CMAKE_DEPENDENT_OPTION(WITH_LIBEVENT "Build with libevent support" ON
-                           "Libevent_FOUND" OFF)
-    find_package(Qt4 QUIET COMPONENTS QtCore QtNetwork)
-    CMAKE_DEPENDENT_OPTION(WITH_QT4 "Build with Qt4 support" ON
-                           "QT4_FOUND" OFF)
-    find_package(Qt5 QUIET COMPONENTS Core Network)
-    CMAKE_DEPENDENT_OPTION(WITH_QT5 "Build with Qt5 support" ON
-                           "Qt5_FOUND" OFF)
+    option(WITH_ZLIB "Build with ZLIB support" ON)
+    option(WITH_LIBEVENT "Build with libevent support" ON)
+    option(WITH_QT4 "Build with Qt4 support" ON)
+    option(WITH_QT5 "Build with Qt5 support" ON)
     if(${WITH_QT4} AND ${WITH_QT5} AND ${CMAKE_MAJOR_VERSION} LESS 3)
       # cmake < 3.0.0 causes conflict when building both Qt4 and Qt5
       set(WITH_QT4 OFF)
     endif()
-    find_package(OpenSSL QUIET)
-    CMAKE_DEPENDENT_OPTION(WITH_OPENSSL "Build with OpenSSL support" ON
-                           "OPENSSL_FOUND" OFF)
+    option(WITH_OPENSSL "Build with OpenSSL support" ON)
     option(WITH_STDTHREADS "Build with C++ std::thread support" OFF)
-    CMAKE_DEPENDENT_OPTION(WITH_BOOSTTHREADS "Build with Boost threads support" OFF
-        "NOT WITH_STDTHREADS;Boost_FOUND" OFF)
+    CMAKE_DEPENDENT_OPTION(
+        WITH_BOOSTTHREADS "Build with Boost threads support" OFF
+        "NOT WITH_STDTHREADS" OFF)
 endif()
 CMAKE_DEPENDENT_OPTION(BUILD_CPP "Build C++ library" ON
-                       "BUILD_LIBRARIES;WITH_CPP;Boost_FOUND" OFF)
+                       "BUILD_LIBRARIES;WITH_CPP" OFF)
 CMAKE_DEPENDENT_OPTION(WITH_PLUGIN "Build compiler plugin support" OFF
                        "BUILD_COMPILER;BUILD_CPP" OFF)
 
@@ -114,7 +104,11 @@ if(BUILD_CPP)
         list(APPEND boost_components unit_test_framework filesystem chrono program_options)
     endif()
     if(boost_components)
-        find_package(Boost 1.53 REQUIRED COMPONENTS ${boost_components})
+        hunter_add_package(Boost COMPONENTS ${boost_components})
+        find_package(Boost CONFIG REQUIRED ${boost_components})
+    else()
+        hunter_add_package(Boost)
+        find_package(Boost CONFIG REQUIRED)
     endif()
 elseif(BUILD_C_GLIB AND BUILD_TESTING)
     find_package(Boost 1.53 REQUIRED)

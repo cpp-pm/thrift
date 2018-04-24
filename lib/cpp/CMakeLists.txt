@@ -17,11 +17,14 @@
 # under the License.
 #
 
-include_directories(SYSTEM "${Boost_INCLUDE_DIRS}")
 include_directories(src)
 
 # SYSLIBS contains libraries that need to be linked to all lib targets
 set(SYSLIBS "")
+set(package_deps Boost)
+set(boost_components)
+
+list(APPEND SYSLIBS Boost::boost)
 
 # Create the thrift C++ library
 set( thriftcpp_SOURCES
@@ -91,14 +94,16 @@ else()
 endif()
 
 # If OpenSSL is not found just ignore the OpenSSL stuff
-find_package(OpenSSL)
-if(OPENSSL_FOUND AND WITH_OPENSSL)
+if(WITH_OPENSSL)
+    hunter_add_package(OpenSSL)
+    find_package(OpenSSL REQUIRED)
     list( APPEND thriftcpp_SOURCES
        src/thrift/transport/TSSLSocket.cpp
        src/thrift/transport/TSSLServerSocket.cpp
     )
     include_directories(SYSTEM "${OPENSSL_INCLUDE_DIR}")
-    list(APPEND SYSLIBS "${OPENSSL_LIBRARIES}")
+    list(APPEND SYSLIBS OpenSSL::SSL OpenSSL::Crypto)
+    list(APPEND package_deps OpenSSL)
 endif()
 
 # WITH_*THREADS selects which threading library to use
@@ -108,7 +113,7 @@ if(WITH_BOOSTTHREADS)
         src/thrift/concurrency/BoostMonitor.cpp
         src/thrift/concurrency/BoostMutex.cpp
     )
-    list(APPEND SYSLIBS "${Boost_LIBRARIES}")
+    list(APPEND boost_components thread)
 elseif(UNIX AND NOT WITH_STDTHREADS)
     if(ANDROID)
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread")
@@ -165,27 +170,31 @@ include(ThriftMacros)
 
 ADD_LIBRARY_THRIFT(thrift ${thriftcpp_SOURCES} ${thriftcpp_threads_SOURCES})
 if(WIN32)
-    TARGET_LINK_LIBRARIES_THRIFT(thrift ${SYSLIBS} ws2_32)
+    TARGET_LINK_LIBRARIES_THRIFT(thrift PUBLIC ${SYSLIBS} ws2_32)
 else()
-    TARGET_LINK_LIBRARIES_THRIFT(thrift ${SYSLIBS})
+  TARGET_LINK_LIBRARIES_THRIFT(thrift PUBLIC ${SYSLIBS})
 endif()
 
 if(WITH_LIBEVENT)
-    find_package(Libevent REQUIRED)  # Libevent comes with CMake support form upstream
+    hunter_add_package(Libevent)
+    find_package(Libevent CONFIG REQUIRED)  # Libevent comes with CMake support form upstream
     include_directories(SYSTEM ${LIBEVENT_INCLUDE_DIRS})
 
     ADD_LIBRARY_THRIFT(thriftnb ${thriftcppnb_SOURCES})
-    TARGET_LINK_LIBRARIES_THRIFT(thriftnb ${SYSLIBS} ${LIBEVENT_LIBRARIES})
+    TARGET_LINK_LIBRARIES_THRIFT(thriftnb ${SYSLIBS} Libevent::event_core Libevent::event_extra)
     TARGET_LINK_LIBRARIES_THRIFT_AGAINST_THRIFT_LIBRARY(thriftnb thrift)
+    list(APPEND package_deps Libevent)
 endif()
 
 if(WITH_ZLIB)
-    find_package(ZLIB REQUIRED)
+    hunter_add_package(ZLIB)
+    find_package(ZLIB CONFIG REQUIRED)
     include_directories(SYSTEM ${ZLIB_INCLUDE_DIRS})
 
     ADD_LIBRARY_THRIFT(thriftz ${thriftcppz_SOURCES})
-    TARGET_LINK_LIBRARIES_THRIFT(thriftz ${SYSLIBS} ${ZLIB_LIBRARIES})
+    TARGET_LINK_LIBRARIES_THRIFT(thriftz ${SYSLIBS} ZLIB::zlib)
     TARGET_LINK_LIBRARIES_THRIFT_AGAINST_THRIFT_LIBRARY(thriftz thrift)
+    list(APPEND package_deps ZLIB)
 endif()
 
 if(WITH_QT4)
@@ -213,6 +222,86 @@ install(DIRECTORY "src/thrift" DESTINATION "${INCLUDE_INSTALL_DIR}"
 # Copy config.h file
 install(DIRECTORY "${CMAKE_BINARY_DIR}/thrift" DESTINATION "${INCLUDE_INSTALL_DIR}"
     FILES_MATCHING PATTERN "*.h")
+
+# Installation (https://github.com/forexample/package-example)
+
+# Introduce variables:
+# * CMAKE_INSTALL_LIBDIR
+# * CMAKE_INSTALL_BINDIR
+# * CMAKE_INSTALL_INCLUDEDIR
+include(GNUInstallDirs)
+
+# Layout. This works for all platforms:
+#   * <prefix>/lib*/cmake/<PROJECT-NAME>
+#   * <prefix>/lib*/
+#   * <prefix>/include/
+set(config_install_dir "${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME}")
+
+set(generated_dir "${CMAKE_CURRENT_BINARY_DIR}/generated")
+
+# Configuration
+set(version_config "${generated_dir}/${PROJECT_NAME}ConfigVersion.cmake")
+set(project_config "${generated_dir}/${PROJECT_NAME}Config.cmake")
+set(TARGETS_EXPORT_NAME "${PROJECT_NAME}Targets")
+set(namespace "${PROJECT_NAME}::")
+
+# Include module with fuction 'write_basic_package_version_file'
+include(CMakePackageConfigHelpers)
+
+# Configure '<PROJECT-NAME>ConfigVersion.cmake'
+# Use:
+#   * PROJECT_VERSION
+write_basic_package_version_file(
+    "${version_config}" COMPATIBILITY SameMajorVersion
+)
+
+# Configure '<PROJECT-NAME>Config.cmake'
+# Use variables:
+#   * TARGETS_EXPORT_NAME
+#   * PROJECT_NAME
+configure_package_config_file(
+    "${PROJECT_SOURCE_DIR}/build/cmake/Config.cmake.in"
+    "${project_config}"
+    INSTALL_DESTINATION "${config_install_dir}"
+)
+
+# Targets:
+#   * <prefix>/lib/libthrift.a
+#   * <prefix>/lib/libthrift.so
+#   * header location after install: <prefix>/include/thrift/Thrift.h
+#   * headers can be included by C++ code `#include <thrift/Thrift.h>`
+install(
+    TARGETS ${thrift_lib_targets}
+    EXPORT "${TARGETS_EXPORT_NAME}"
+    LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}"
+    ARCHIVE DESTINATION "${CMAKE_INSTALL_LIBDIR}"
+    RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}"
+    INCLUDES DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}"
+)
+
+# Headers:
+#   * src/thrift/Thrift.h -> <prefix>/include/thrift/Thrift.h
+install(
+    DIRECTORY "src/thrift"
+    DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}"
+    FILES_MATCHING PATTERN "*.h"
+)
+
+# Config
+#   * <prefix>/lib/cmake/thrift/thriftConfig.cmake
+#   * <prefix>/lib/cmake/thrift/thriftConfigVersion.cmake
+install(
+    FILES "${project_config}" "${version_config}"
+    DESTINATION "${config_install_dir}"
+)
+
+# Config
+#   * <prefix>/lib/cmake/thrift/thriftTargets.cmake
+install(
+    EXPORT "${TARGETS_EXPORT_NAME}"
+    NAMESPACE "${namespace}"
+    DESTINATION "${config_install_dir}"
+)
 
 if(BUILD_TESTING)
     add_subdirectory(test)
