@@ -26,9 +26,13 @@ cmake_minimum_required(VERSION 3.1)
 # Otherwise
 #   http://cmake.org
 
-project("Apache Thrift")
-
 set(CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH}" "${CMAKE_CURRENT_SOURCE_DIR}/build/cmake")
+
+include(HunterGate)
+HunterGate(
+    URL "https://github.com/ruslo/hunter/archive/v0.20.53.tar.gz"
+    SHA1 "56ac21f53b95ad8d56fbee39b227608bafcbd84e"
+)
 
 # TODO: add `git rev-parse --short HEAD`
 # Read the version information from the Autoconf file
@@ -44,6 +48,8 @@ string(REGEX REPLACE "([0-9]+)\\.[0-9]+\\.[0-9]+" "\\1" thrift_VERSION_MAJOR ${t
 string(REGEX REPLACE "[0-9]+\\.([0-9])+\\.[0-9]+" "\\1" thrift_VERSION_MINOR ${thrift_VERSION})
 string(REGEX REPLACE "[0-9]+\\.[0-9]+\\.([0-9]+)" "\\1" thrift_VERSION_PATCH ${thrift_VERSION})
 message(STATUS "Parsed Thrift version: ${thrift_VERSION} (${thrift_VERSION_MAJOR}.${thrift_VERSION_MINOR}.${thrift_VERSION_PATCH})")
+
+project(thrift VERSION ${thrift_VERSION})
 
 # Some default settings
 include(DefineCMakeDefaults)

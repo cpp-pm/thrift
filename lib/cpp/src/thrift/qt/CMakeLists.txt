@@ -22,7 +22,9 @@ set( thriftcppqt5_SOURCES
     TQTcpServer.cpp
 )
 set(CMAKE_AUTOMOC ON)
-find_package(Qt5 REQUIRED COMPONENTS Core Network)
+hunter_add_package(Qt)
+find_package(Qt5Core CONFIG REQUIRED)
+find_package(Qt5Network CONFIG REQUIRED)
 ADD_LIBRARY_THRIFT(thriftqt5 ${thriftcppqt5_SOURCES})
 TARGET_LINK_LIBRARIES_THRIFT(thriftqt5 Qt5::Core Qt5::Network)
 TARGET_LINK_LIBRARIES_THRIFT_AGAINST_THRIFT_LIBRARY(thriftqt5 thrift)

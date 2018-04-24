@@ -29,7 +29,9 @@ if(MSVC)
     endif(HAVE_STDINT_H)
 endif()
 
+hunter_add_package(flex)
 find_package(FLEX REQUIRED)
+hunter_add_package(bison)
 find_package(BISON REQUIRED)
 
 # create directory for thrifty and thriftl
@@ -148,7 +150,7 @@ if(${WITH_PLUGIN})
         src/thrift/plugin/plugin_output.cc
         src/thrift/plugin/plugin.cc
     )
-    TARGET_INCLUDE_DIRECTORIES_THRIFT(thriftc PUBLIC ${Boost_INCLUDE_DIRS})
+    TARGET_INCLUDE_DIRECTORIES_THRIFT(thriftc "")
     TARGET_LINK_LIBRARIES_THRIFT_AGAINST_THRIFT_LIBRARY(thriftc thrift PUBLIC)
     target_compile_definitions(thrift-compiler PUBLIC THRIFT_ENABLE_PLUGIN)
     LINK_AGAINST_THRIFT_LIBRARY(thrift-compiler thriftc)
