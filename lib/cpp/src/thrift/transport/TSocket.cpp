@@ -63,11 +63,11 @@ inline SOCKOPT_CAST_T* cast_sockopt(T* v) {
   return reinterpret_cast<SOCKOPT_CAST_T*>(v);
 }
 
+using std::string;
+
 namespace apache {
 namespace thrift {
 namespace transport {
-
-using namespace std;
 
 /**
  * TSocket implementation.
@@ -141,7 +141,7 @@ TSocket::TSocket(THRIFT_SOCKET socket)
 #endif
 }
 
-TSocket::TSocket(THRIFT_SOCKET socket, boost::shared_ptr<THRIFT_SOCKET> interruptListener)
+TSocket::TSocket(THRIFT_SOCKET socket, stdcxx::shared_ptr<THRIFT_SOCKET> interruptListener)
   : port_(0),
     socket_(socket),
     peerPort_(0),
@@ -385,7 +385,11 @@ void TSocket::openConnection(struct addrinfo* res) {
 
 done:
   // Set socket back to normal mode (blocking)
-  THRIFT_FCNTL(socket_, THRIFT_F_SETFL, flags);
+  if (-1 == THRIFT_FCNTL(socket_, THRIFT_F_SETFL, flags)) {
+    int errno_copy = THRIFT_GET_SOCKET_ERROR;
+    GlobalOutput.perror("TSocket::open() THRIFT_FCNTL " + getSocketInfo(), errno_copy);
+    throw TTransportException(TTransportException::NOT_OPEN, "THRIFT_FCNTL() failed", errno_copy);
+  }
 
   if (path_.empty()) {
     setCachedAddress(res->ai_addr, static_cast<socklen_t>(res->ai_addrlen));
